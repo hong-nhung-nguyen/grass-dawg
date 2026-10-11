@@ -9,7 +9,7 @@ Entry for the DEV Hacktoberfest Open-Source AI Challenge, Week 1: Touch Grass.
 - Home screen with the pet sulking, facing the wall
 - Camera snapshot checked by CLIP (Transformers.js) to decide indoor vs outdoor
 - Pet wakes up and celebrates when you're outside
-- System check panel: WebGPU support, language model download (WebLLM, Qwen2.5), and a test line from the pet
+- System check panel: WebGPU support, on-device language model download (Gemma 3 1B by default, with Qwen2.5 alternatives), and a test line from the pet
 - Pet stats saved between sessions
 
 ## Run it
@@ -32,4 +32,4 @@ The first CLIP check downloads the vision model (about 150 MB). After that it lo
 
 ## Stack
 
-React + Vite, Tailwind CSS v4, Transformers.js (CLIP ViT-B/32), WebLLM (Qwen2.5-1.5B / 0.5B), localStorage for now (RxDB with optional MongoDB sync later).
+React + Vite, Tailwind CSS v4, Transformers.js (CLIP ViT-B/32), WebLLM (Gemma 3 1B and Qwen2.5-1.5B / 0.5B), localStorage for now (RxDB with optional MongoDB sync later).

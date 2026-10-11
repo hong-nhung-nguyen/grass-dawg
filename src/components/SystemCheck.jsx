@@ -5,7 +5,7 @@ import { MODELS, checkWebGPU, isLLMReady, loadLLM, petSay } from '../ai/llm.js'
 // language model can load and talk, before anything else gets built on top of it
 export default function SystemCheck({ pet, onClose }) {
   const [gpu, setGpu] = useState(null)
-  const [modelKey, setModelKey] = useState('main')
+  const [modelKey, setModelKey] = useState('gemma')
   const [progress, setProgress] = useState(null)
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(isLLMReady())

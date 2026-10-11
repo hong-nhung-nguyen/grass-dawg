@@ -1,7 +1,9 @@
 import { CreateWebWorkerMLCEngine } from '@mlc-ai/web-llm'
 
-// Main model and a smaller backup for phones that struggle with the main one
+// Gemma is the default on-device dog dialogue model. Keep Qwen choices available
+// for devices where Gemma is too demanding or users prefer a different model.
 export const MODELS = {
+  gemma: { id: 'gemma3-1b-it-q4f16_1-MLC', label: 'Gemma 3 1B (on-device)' },
   main: { id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', label: 'Qwen2.5 1.5B (about 1 GB)' },
   small: { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', label: 'Qwen2.5 0.5B (about 400 MB)' },
 }
