@@ -1,4 +1,5 @@
-const PLACES_CACHE_KEY = 'grass-dawg:places:v2'
+const PLACES_CACHE_KEY = 'grass-dawg:places:v3'
+const PLACES_CACHE_TTL = 7 * 24 * 60 * 60 * 1000
 const pendingLookups = new Map()
 
 function cacheKey(city) {
@@ -14,7 +15,7 @@ export function readCityPlaces(city, coords) {
     const cache = JSON.parse(localStorage.getItem(PLACES_CACHE_KEY) || '{}')
     const entry = cache[cacheKey(city, coords)]
     const usable = entry?.places?.every((place) => Number.isFinite(place.latitude) && Number.isFinite(place.longitude))
-    return entry && usable && Date.now() - entry.savedAt < 30 * 24 * 60 * 60 * 1000 ? entry.places : null
+    return entry && usable && Date.now() - entry.savedAt < PLACES_CACHE_TTL ? entry.places : null
   } catch {
     return null
   }
@@ -51,13 +52,49 @@ export function makeCityQuests(places, city) {
           : `Let's explore ${place.name} in ${city}.`,
       target: classification.target,
       preference: classification.preference,
-      placePopularity: Number(Boolean(place.tags.wikidata || place.tags.wikipedia || place.tags.website)) + Number(Boolean(place.tags.tourism || place.tags.route === 'hiking')),
+      placePopularity: Number(Boolean(place.tags.wikidata || place.tags.wikipedia || place.tags.website)) + Number(Boolean(place.tags.tourism || place.tags.route === 'hiking')) + (place.serpApiPopularity || 0),
       goal: 1,
       mark: classification.kind.toUpperCase(),
       placeName: place.name,
       targetCoordinates: { latitude: place.latitude, longitude: place.longitude },
     }
   }).filter(Boolean)
+}
+
+function comparablePlaceName(value) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/^the\s+/, '').replace(/[^a-z0-9]/g, '')
+}
+
+async function getSerpApiPlaces(city) {
+  const endpoint = import.meta.env.VITE_PLACES_API_URL
+  if (!endpoint) return []
+
+  const url = new URL(endpoint, window.location.origin)
+  url.searchParams.set('city', city)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 12000)
+  try {
+    const response = await fetch(url, { signal: controller.signal })
+    if (!response.ok) return []
+    const data = await response.json()
+    return Array.isArray(data.places) ? data.places : []
+  } catch {
+    return []
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+function rankOsmPlacesWithSerpApi(places, serpApiPlaces) {
+  if (!serpApiPlaces.length) return places
+  const ranked = serpApiPlaces.map((place) => ({ ...place, comparableName: comparablePlaceName(place.name) }))
+  return places.map((place) => {
+    const name = comparablePlaceName(place.name)
+    const match = ranked.find((candidate) => candidate.comparableName === name
+      || (Math.min(name.length, candidate.comparableName.length) >= 8
+        && (name.includes(candidate.comparableName) || candidate.comparableName.includes(name))))
+    return match ? { ...place, serpApiPopularity: match.popularity } : place
+  })
 }
 
 async function loadCityPlaces(city, coords) {
@@ -107,12 +144,14 @@ async function loadCityPlaces(city, coords) {
     seen.add(dedupeKey)
     return [{ id: `${element.type}-${element.id}`, name, tags, latitude, longitude }]
   })
+  const serpApiPlaces = await getSerpApiPlaces(city)
+  const rankedPlaces = rankOsmPlacesWithSerpApi(places, serpApiPlaces)
   try {
     const cache = JSON.parse(localStorage.getItem(PLACES_CACHE_KEY) || '{}')
-    cache[cacheKey(city, coords)] = { savedAt: Date.now(), places }
+    cache[cacheKey(city, coords)] = { savedAt: Date.now(), places: rankedPlaces }
     localStorage.setItem(PLACES_CACHE_KEY, JSON.stringify(cache))
   } catch { /* POIs can be fetched again if local storage is unavailable */ }
-  return places
+  return rankedPlaces
 }
 
 export function fetchCityPlaces(city, coords) {

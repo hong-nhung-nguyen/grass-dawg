@@ -1,8 +1,23 @@
 services:
   - type: web
+    name: grass-dawg-places-api
+    runtime: node
+    plan: free
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm run start:places-api
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: SERPAPI_API_KEY
+        sync: false
+  - type: web
     name: grass-dawg
     runtime: static
     branch: main
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist
     autoDeployTrigger: commit
+    envVars:
+      - key: VITE_PLACES_API_URL
+        value: https://grass-dawg-places-api.onrender.com/api/places

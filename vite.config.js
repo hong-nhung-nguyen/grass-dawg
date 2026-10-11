@@ -9,6 +9,9 @@ export default defineConfig({
   server: {
     // host: true exposes the dev server on your local network so your phone can open it
     host: true,
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
   },
   optimizeDeps: {
     // Transformers.js ships its own WASM files and breaks if Vite tries to pre-bundle it

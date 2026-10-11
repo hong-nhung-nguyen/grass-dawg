@@ -30,6 +30,14 @@ The dev server prints a Network URL like `https://192.168.x.x:5173`. Open that o
 
 The first CLIP check downloads the vision model (about 150 MB). After that it loads from cache.
 
+## SerpApi city-place enrichment
+
+Explore quests continue to use OpenStreetMap's city-bounded places as their destination source. When the Render places API has a SerpApi key, it uses Google Local nature results to rank matching named places; SerpApi results do not add unverified destinations.
+
+To enable the enrichment on Render, add `SERPAPI_API_KEY` to the `grass-dawg-places-api` service's environment variables. The key stays on the server and is never bundled into the app. Without a key, Explore quests continue to use the OpenStreetMap results.
+
+For local development, copy `.env.example` to `.env.local`, set `SERPAPI_API_KEY` in the environment used to start `npm run start:places-api`, then run `npm run start:places-api` and `npm run dev` in separate terminals. The Vite proxy forwards `/api` requests to the local places API.
+
 ## Stack
 
 React + Vite, Tailwind CSS v4, Transformers.js (CLIP ViT-B/32), WebLLM (Gemma 3 1B and Qwen2.5-1.5B / 0.5B), localStorage for now (RxDB with optional MongoDB sync later).
